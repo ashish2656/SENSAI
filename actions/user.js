@@ -16,21 +16,25 @@ export async function updateUser(data) {
   if (!user) throw new Error("User not found");
 
   try {
-    // Start a transaction to handle both operations
+    // First check if industry insights exist (outside transaction)
+    let industryInsight = await db.industryInsight.findUnique({
+      where: {
+        industry: data.industry,
+      },
+    });
+
+    // Generate insights outside transaction if needed
+    let insights = null;
+    if (!industryInsight) {
+      insights = await generateAIInsights(data.industry);
+    }
+
+    // Now do the quick database operations in a transaction
     const result = await db.$transaction(
       async (tx) => {
-        // First check if industry exists
-        let industryInsight = await tx.industryInsight.findUnique({
-          where: {
-            industry: data.industry,
-          },
-        });
-
-        // If industry doesn't exist, create it with default values
-        if (!industryInsight) {
-          const insights = await generateAIInsights(data.industry);
-
-          industryInsight = await db.industryInsight.create({
+        // Create industry insight if it doesn't exist
+        if (!industryInsight && insights) {
+          industryInsight = await tx.industryInsight.create({
             data: {
               industry: data.industry,
               ...insights,
@@ -39,7 +43,7 @@ export async function updateUser(data) {
           });
         }
 
-        // Now update the user
+        // Update the user
         const updatedUser = await tx.user.update({
           where: {
             id: user.id,
@@ -55,15 +59,21 @@ export async function updateUser(data) {
         return { updatedUser, industryInsight };
       },
       {
-        timeout: 10000, // default: 5000
+        timeout: 10000,
       }
     );
 
     revalidatePath("/");
-    return result.user;
+    return result.updatedUser;
   } catch (error) {
     console.error("Error updating user and industry:", error.message);
-    throw new Error("Failed to update profile");
+    
+    // Provide more specific error message
+    if (error.message?.includes('overloaded') || error.message?.includes('503')) {
+      throw new Error("AI service is temporarily unavailable. Your profile was saved with default insights. Please try refreshing in a moment.");
+    }
+    
+    throw new Error("Failed to update profile: " + error.message);
   }
 }
 
