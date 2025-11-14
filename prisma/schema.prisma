@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum DemandLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum MarketOutlook {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
 model User {
   id            String    @id @default(uuid())
   clerkUserId   String    @unique // clerk user id
@@ -82,11 +94,11 @@ model IndustryInsight {
   
   // Industry trends
   growthRate    Float     // Industry growth rate
-  demandLevel   String    // "High", "Medium", "Low"
+  demandLevel   DemandLevel // HIGH, MEDIUM, LOW
   topSkills     String[]  // Most in-demand skills
   
   // Market conditions
-  marketOutlook String    // "Positive", "Neutral", "Negative"
+  marketOutlook MarketOutlook // POSITIVE, NEUTRAL, NEGATIVE
   keyTrends     String[]  // Array of current industry trends
   
   // Learning suggestions

@@ -142,7 +142,13 @@ export function EntryForm({ type, entries, onChange }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Input
-                  placeholder="Title/Position"
+                  placeholder={
+                    type === 'Experience'
+                      ? 'Job Title (e.g., Senior Software Engineer)'
+                      : type === 'Project'
+                      ? 'Project Title (e.g., AI Chatbot)'
+                      : 'Degree/Title (e.g., B.Sc. Computer Science)'
+                  }
                   {...register("title")}
                   error={errors.title}
                 />
@@ -152,7 +158,13 @@ export function EntryForm({ type, entries, onChange }) {
               </div>
               <div className="space-y-2">
                 <Input
-                  placeholder="Organization/Company"
+                  placeholder={
+                    type === 'Experience'
+                      ? 'Company/Organization'
+                      : type === 'Project'
+                      ? 'Project Organization/Team'
+                      : 'School/University'
+                  }
                   {...register("organization")}
                   error={errors.organization}
                 />
@@ -209,7 +221,7 @@ export function EntryForm({ type, entries, onChange }) {
 
             <div className="space-y-2">
               <Textarea
-                placeholder={`Description of your ${type.toLowerCase()}`}
+                placeholder={type === 'Experience' ? 'Describe your job role, key responsibilities, and achievements' : type === 'Project' ? 'Describe your project goals, technologies used, and outcomes achieved' : 'Describe your coursework, achievements, or focus areas'}
                 className="h-32"
                 {...register("description")}
                 error={errors.description}
